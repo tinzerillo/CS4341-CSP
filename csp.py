@@ -2,7 +2,7 @@
 
 from enum import Enum
 import sys
-import bag
+from bag import *
 
 class InputType(Enum):
 	vars=1
@@ -32,6 +32,7 @@ def parseInput(file):
 	while line:
 		if line[0] is '#':
 			input+=1
+			line = f.readline()
 		else:
 			line.split(" ")
 			if type is 1:
@@ -51,14 +52,13 @@ def parseInput(file):
 				binarynotequals.append(line[0]+line[1])
 			elif type is 8:
 				bin_sim[line(0)+line(1)]=(line[2]+line[3])
-		
-		line = f.readline()
+			line = f.readline()
 		
 	f.close()
 
 
 def within_limits(bg, n):
-	return 
+	return bg.count() < n
 
 
 def can_be_in_bag(bg, x):

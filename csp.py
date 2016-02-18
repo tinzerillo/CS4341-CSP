@@ -59,7 +59,7 @@ def parseInput(file):
 	f.close()
 
 def within_limits(bag, n):
-	return bag.count + n <= bag_max and bag.count + n >= bag_min
+	return bag.weight + n <= bag_max and bag.weight + n >= bag_min
 
 def canAddToBag(item, bag):
 	# unary exclusive
@@ -90,7 +90,7 @@ def canAddToBag(item, bag):
 	
 	# fitting limits
 	if bag_max is 0:
-		return bag.capacity - bag.count >= items[item]
+		return bag.capacity - bag.weight >= items[item]
 	else:
 		return within_limits(bag, items[item])
 
@@ -219,6 +219,16 @@ def Backtrack(assignment):
 		else:
 			Backtrack(assignment)
 
+def min_remaining_vals():
+	pass
+	
+def least_constraining_val():
+	pass
+	
+def arc_consistency():
+	pass
+			
+			
 if len(sys.argv) != 2:
 	print("Proper usage is python csp.py inputfile")
 	exit()

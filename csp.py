@@ -195,7 +195,7 @@ def nextUnassignedVariables(assignment):
 
 	for b in assignment:
 		print(b.contains)
-		for variable in b.contains:
+		for variable in b.contains and variable in variables:
 			variables.remove(variable)
 		if len(variables) is 0:
 			return []

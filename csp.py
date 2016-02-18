@@ -69,15 +69,15 @@ def canAddToBag(item, bag):
 			
 	# unary inclusive
 	if item in un_incl.keys():
-		if un_incl[item].contains(bag) is False:
+		if bag not in un_incl[item]:
 			return False
 			
 	# mutually exclusive
 	for key in list(bin_sim.keys()):
-		if key[0] is item and bin_sim[key].contains(bag):
+		if key[0] is item and  bag in bin_sim[key]:
 			if key[1] in bag.contains:
 				return False
-		elif key[1] is item and bin_sim[key].contains(bag):
+		elif key[1] is item and bag in bin_sim[key]:
 			if key[0] in bag.contains:
 				return False
 				
@@ -123,7 +123,6 @@ def Backtrack(assignment):
 		if canAddToBag(var, bag) is True:
 			bag.addItem(var, items[var])
 		else:
-			i+=1
 			Backtrack(assignment)
 	
 if len(sys.argv) != 2:

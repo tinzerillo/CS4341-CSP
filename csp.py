@@ -63,21 +63,21 @@ def within_limits(bag, n):
 
 def canAddToBag(item, bag):
 	# unary exclusive
-	if item in un_excl.keys():
-		if bag in un_excl[item]:
+	if item in list(un_excl.keys()):
+		if bag.name in un_excl[item]:
 			return False
 
 	# unary inclusive
-	if item in un_incl.keys():
-		if bag not in un_incl[item]:
+	if item in list(un_incl.keys()):
+		if bag.name not in un_incl[item]:
 			return False
 
 	# mutually exclusive
 	for key in list(bin_sim.keys()):
-		if key[0] is item and  bag in bin_sim[key]:
+		if key[0] is item and  bag.name in bin_sim[key]:
 			if key[1] in bag.contains:
 				return False
-		elif key[1] is item and bag in bin_sim[key]:
+		elif key[1] is item and bag.name in bin_sim[key]:
 			if key[0] in bag.contains:
 				return False
 
@@ -98,9 +98,9 @@ def isCSPcomplete(assignment):
 
 	# Fit limits
 	for bag in assignment:
-		if bag.count < (bag.capacity * 0.9):
+		if bag.weight < (bag.capacity * 0.9):
 			return False
-		if within_limits(bag, bag.count) is False:
+		if within_limits(bag, bag.weight) is False:
 			return False
 
 	# Unary inclusive
@@ -202,30 +202,53 @@ def nextUnassignedVariables(assignment):
 				if len(variables) is 0:
 					return []
 
-	return variables
+	return min_remaining_var(variables, assignment)
 
-def Backtrack(assignment):
-	if isCSPcomplete is True:
+
+def Backtrack(assignment, i):
+	i -= 1
+	
+	if isCSPcomplete(assignment) is True or i is 0:
 		return
 
 	if len(nextUnassignedVariables(assignment)) is 0:
 		return
 
-	var = nextUnassignedVariables(assignment)[0]
+	var = nextUnassignedVariables(assignment)
 
-	for bag in assignment:
-		if canAddToBag(var, bag) is True:
-			bag.addItem(var, items[var])
+	for val in least_constraining_vals(var, assignment):
+		if canAddToBag(var, val) is True:
+			val.addItem(var, items[var])
 		else:
-			Backtrack(assignment)
+			Backtrack(assignment, i)
 
 
-def min_remaining_vals():
-	pass
+def min_remaining_var(items, bags):
+	bags_per_item = {}
 
-def least_constraining_val():
-	pass
+	for i in items:
+		bags_per_item[i] = 0
+		for b in bags:
+			if canAddToBag(i, b):
+				bags_per_item[i] += 1
+		
+	return min(bags_per_item, key=bags_per_item.get)
 
+def least_constraining_vals(items, bags):
+	items_per_bag = {}
+
+	for b in bags:
+		items_per_bag[b] = 0
+		for i in items:
+			if canAddToBag(i, b):
+				items_per_bag[b] += 1
+	
+	#Flip dictionary
+	sortedDict = sorted(items_per_bag, key=items_per_bag.get)
+	return reversed(sortedDict)
+	
+
+	
 def arc_consistency():
 	pass
 
@@ -250,8 +273,6 @@ if len(sys.argv) != 2:
 
 
 parseInput(sys.argv[1])
-#Backtrack(bags)
-#for b in bags:
-	#print(b.contains)
+Backtrack(bags, 7)
 
 output(bags)

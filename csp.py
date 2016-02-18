@@ -100,6 +100,7 @@ def isCSPcomplete(assignment):
 	for bag in assignment:
 		if bag.count < (bag.capacity * 0.9):
 			return False
+		if within_limits()
 
 	# Unary inclusive
 	for constraint in un_incl.items():

@@ -196,10 +196,11 @@ def nextUnassignedVariables(assignment):
 	variables = list(items.keys())
 
 	for b in assignment:
-		for variable in b.contains and variable in variables:
-			variables.remove(variable)
-		if len(variables) is 0:
-			return []
+		for variable in b.contains:
+			if variable in variables:
+				variables.remove(variable)
+				if len(variables) is 0:
+					return []
 
 	return variables
 

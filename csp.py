@@ -58,11 +58,37 @@ def parseInput(file):
 		
 	f.close()
 
-
 def within_limits(bag, n):
 	return bag.count + n <= bag_max and bag.count + n >= bag_min
 	
 def canAddToBag(item, bag):
+	# unary exclusive
+	if item in un_excl.keys():
+		if un_excl[item].contains(bag):
+			return False
+			
+	# unary inclusive
+	if item in un_incl.keys():
+		if un_incl[item].contains(bag) is False:
+			return False
+			
+	# mutually exclusive
+	for key in list(bin_sim.keys()):
+		if key[0] is item and bin_sim[key].contains(bag):
+			if key[1] in bag.contains:
+				return False
+		elif key[1] is item and bin_sim[key].contains(bag):
+			if key[0] in bag.contains:
+				return False
+				
+	# binary not equals
+	for pair in binarynotequals:
+		if pair[0] is item and pair[1] in bag.contains:
+			return False
+		elif pair[1] is item and pair[0] in bag.contains:
+			return False
+	
+	# fitting limits
 	if bag_max is 0:
 		return bag.capacity - bag.count >= items[item]
 	else:

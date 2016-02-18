@@ -66,12 +66,12 @@ def canAddToBag(item, bag):
 	if item in un_excl.keys():
 		if bag in un_excl[item]:
 			return False
-			
+
 	# unary inclusive
 	if item in un_incl.keys():
 		if bag not in un_incl[item]:
 			return False
-			
+
 	# mutually exclusive
 	for key in list(bin_sim.keys()):
 		if key[0] is item and  bag in bin_sim[key]:
@@ -80,14 +80,14 @@ def canAddToBag(item, bag):
 		elif key[1] is item and bag in bin_sim[key]:
 			if key[0] in bag.contains:
 				return False
-				
+
 	# binary not equals
 	for pair in binarynotequals:
 		if pair[0] is item and pair[1] in bag.contains:
 			return False
 		elif pair[1] is item and pair[0] in bag.contains:
 			return False
-	
+
 	# fitting limits
 	if bag_max is 0:
 		return bag.capacity - bag.weight >= items[item]
@@ -219,21 +219,39 @@ def Backtrack(assignment):
 		else:
 			Backtrack(assignment)
 
+
 def min_remaining_vals():
 	pass
-	
+
 def least_constraining_val():
 	pass
-	
+
 def arc_consistency():
 	pass
-			
-			
+
+
+def output(assignment):
+	for bag in assignment:
+		print(bag.name, " ", end="")
+		for variable in bag.contains:
+			print(variable, end="")
+		print(" ")
+
+		print("number of items: " + str(len(bag.contains)))
+		print("total weight: " + str(bag.weight) + "/" + str(bag.capacity))
+		print("wasted capacity: " + str(bag.wastedCapacity()))
+		print("")
+
+
 if len(sys.argv) != 2:
 	print("Proper usage is python csp.py inputfile")
 	exit()
 
+
+
 parseInput(sys.argv[1])
-Backtrack(bags)
+#Backtrack(bags)
 #for b in bags:
 	#print(b.contains)
+
+output(bags)

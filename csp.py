@@ -60,11 +60,11 @@ def parseInput(file):
 
 
 def within_limits(bag, n):
-	return bag.count() < n
+	return bag.count + n <= bag_max and bag.count + n >= bag_min
 	
 def canAddToBag(item, bag):
 	if bag_max is 0:
-		return bag.capacity >= items[item]
+		return bag.capacity - bag.count >= items[item]
 	else:
 		return within_limits(bag, items[item])
 	
@@ -75,8 +75,9 @@ def nextUnassignedVariables(assignment):
 	#assignment: [] of bags
 	variables = list(items.keys())
 	
-	for bag in assignment:
-		for variable in bag.contains:
+	for b in assignment:
+		print(b.contains)
+		for variable in b.contains:
 			variables.remove(variable)
 		if len(variables) is 0:
 			return []
@@ -105,7 +106,7 @@ if len(sys.argv) != 2:
 	
 parseInput(sys.argv[1])
 Backtrack(bags)
-for b in bags:
-	print(b.contains)
+#for b in bags:
+	#print(b.contains)
 	
 

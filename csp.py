@@ -64,7 +64,7 @@ def within_limits(bag, n):
 def canAddToBag(item, bag):
 	# unary exclusive
 	if item in un_excl.keys():
-		if un_excl[item].contains(bag):
+		if bag in un_excl[item]:
 			return False
 			
 	# unary inclusive
@@ -100,7 +100,8 @@ def isCSPcomplete(assignment):
 	for bag in assignment:
 		if bag.count < (bag.capacity * 0.9):
 			return False
-		if within_limits()
+		if within_limits(bag, bag.count) is False:
+			return False
 
 	# Unary inclusive
 	for constraint in un_incl.items():
@@ -195,7 +196,6 @@ def nextUnassignedVariables(assignment):
 	variables = list(items.keys())
 
 	for b in assignment:
-		print(b.contains)
 		for variable in b.contains and variable in variables:
 			variables.remove(variable)
 		if len(variables) is 0:

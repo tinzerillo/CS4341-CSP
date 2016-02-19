@@ -205,10 +205,8 @@ def nextUnassignedVariables(assignment):
 	return min_remaining_var(variables, assignment)
 
 
-def Backtrack(assignment, i):
-	i -= 1
-	
-	if isCSPcomplete(assignment) is True or i is 0:
+def Backtrack(assignment):
+	if isCSPcomplete(assignment) is True:
 		return
 
 	if len(nextUnassignedVariables(assignment)) is 0:
@@ -219,8 +217,10 @@ def Backtrack(assignment, i):
 	for val in least_constraining_vals(var, assignment):
 		if canAddToBag(var, val) is True:
 			val.addItem(var, items[var])
-		else:
-			Backtrack(assignment, i)
+			break;
+
+	if nextUnassignedVariables(assignment) is not []:
+		Backtrack(assignment)
 
 
 def min_remaining_var(items, bags):
@@ -257,7 +257,7 @@ def output(assignment):
 	for bag in assignment:
 		print(bag.name, " ", end="")
 		for variable in bag.contains:
-			print(variable, end="")
+			print(variable, end=" ")
 		print(" ")
 
 		print("number of items: " + str(len(bag.contains)))
@@ -273,6 +273,6 @@ if len(sys.argv) != 2:
 
 
 parseInput(sys.argv[1])
-Backtrack(bags, 7)
+Backtrack(bags)
 
 output(bags)

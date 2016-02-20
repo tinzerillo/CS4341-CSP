@@ -4,6 +4,7 @@ from enum import Enum
 from constraint import Constraint
 import sys
 from bag import *
+import math
 
 class InputType(Enum):
 	vars=1
@@ -141,8 +142,8 @@ def isCSPcomplete(assignment):
 	# Fit limits
 	print("isCSPcomplete: fit limits")
 	for bag in assignment:
-		if bag.weight < (bag.capacity * 0.9):
-			print("returning false due to fit limits case 1")
+		if bag.weight < math.floor(bag.capacity * 0.9) :
+			print("returning false due to fit limits case 1: weight", bag.weight, "capacity", bag.capacity)
 			return False
 		
 		if constraints.bag_max != 0 and within_limits(bag, 0) == False:
@@ -182,8 +183,8 @@ def isCSPcomplete(assignment):
 	#print 
 	for constraint in constraints.binaryequals:
 		print("182 ", constraint)
-		variableOne = constraint[0][0]
-		variableTwo = constraint[1][0]
+		variableOne = constraint[0]
+		variableTwo = constraint[1]
 
 
 		for bag in assignment:

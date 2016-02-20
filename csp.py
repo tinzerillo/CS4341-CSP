@@ -135,7 +135,6 @@ def isCSPcomplete(assignment):
 	print("isCSPcomplete starter")
 
 	for item in items:
-		print(item)
 		if not isInAnyBag(item):
 			return False
 
@@ -290,10 +289,23 @@ def least_constraining_vals(items, bags):
 				items_per_bag[b] += 1
 	
 	#Flip dictionary
-	sortedDict = sorted(items_per_bag, key=items_per_bag.get)
+	sortedDict = sorted(items_per_bag, key = lambda x: (items_per_bag.get, fitCapacityHeuristic(x)))
+	#sortedDict = sorted(items_per_bag, key=items_per_bag.get)
 	return reversed(sortedDict)
 	
+def fitCapacityHeuristic(bag1):
+	ret = 0
+	
+	cap1 = math.floor(bag1.capacity * 0.9)
+	if bag1.weight < cap1:
+			ret += cap1-bag1.weight
+		
+	if constraints.bag_max != 0:
+		if len(bag1.contains) < constraints.bag_min:
+			ret += constraints.bag_min - len(bag1.contains)
 
+	return ret
+		
 	
 def arc_consistency():
 	pass

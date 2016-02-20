@@ -61,7 +61,7 @@ def parseInput(file):
 	f.close()
 
 def within_limits(bag, n):
-
+	print("len(bag.contains) is ",len(bag.contains)," and min is ",constraints.bag_min)
 	return len(bag.contains) + n <= constraints.bag_max and len(bag.contains) + n >= constraints.bag_min
 
 def isInAnyBag(item):
@@ -131,19 +131,22 @@ def canAddToBag(item, bag):
 	return (bag.capacity - bag.weight) >= items[item]
 
 def isCSPcomplete(assignment):
+	print("isCSPcomplete starter")
 
-	print(items)
 	for item in items:
 		print(item)
 		if not isInAnyBag(item):
 			return False
 
 	# Fit limits
+	print("isCSPcomplete: fit limits")
 	for bag in assignment:
 		if bag.weight < (bag.capacity * 0.9):
+			print("returning false due to fit limits case 1")
 			return False
 		
-		if constraints.bag_max != 0 and within_limits(bag, 0) is False:
+		if constraints.bag_max != 0 and within_limits(bag, 0) == False:
+			print("returning false due to fit limits case 2")
 			return False
 
 	# Unary inclusive
@@ -176,7 +179,9 @@ def isCSPcomplete(assignment):
 	#Binary constraints
 
 	#Equal
+	#print 
 	for constraint in constraints.binaryequals:
+		print("182 ", constraint)
 		variableOne = constraint[0][0]
 		variableTwo = constraint[1][0]
 
@@ -189,8 +194,8 @@ def isCSPcomplete(assignment):
 
 	#Not equal
 	for constraint in constraints.binarynotequals:
-		variableOne = constraint[0][0]
-		variableTwo = constraint[0][1]
+		variableOne = constraint[0]
+		variableTwo = constraint[1]
 
 		for bag in assignment:
 			if variableOne in bag.contains:
@@ -237,7 +242,7 @@ def nextUnassignedVariables(assignment):
 		for variable in b.contains:
 			if variable in variables:
 				variables.remove(variable)
-				if len(variables) is 0:
+				if len(variables) == 0:
 					return []
 
 	return min_remaining_var(variables, assignment)
@@ -245,21 +250,24 @@ def nextUnassignedVariables(assignment):
 
 def Backtrack(assignment, i):
 	i -= 1
-	if isCSPcomplete(assignment) is True:
-		return
-
+	
 	#if len(nextUnassignedVariables(assignment)) is 0:
 	#	return
 
 	var = nextUnassignedVariables(assignment)
 
 	for val in least_constraining_vals(var, assignment):
-		if canAddToBag(var, val) is True:
+		if canAddToBag(var, val) == True:
 			val.addItem(var, items[var])
 			break;
 
-	if len(nextUnassignedVariables(assignment)) != 0:
+	if len(nextUnassignedVariables(assignment)) > 0:
 		Backtrack(assignment, i)
+
+	if isCSPcomplete(assignment) == True:
+		return True
+	else:
+		return False
 
 
 def min_remaining_var(items, bags):
@@ -309,11 +317,12 @@ if len(sys.argv) != 2:
 	print("Proper usage is python csp.py inputfile")
 	exit()
 
-sys.setrecursionlimit(50000)
+sys.setrecursionlimit(99000)
 
-i = 19999
+i = 600
 
 parseInput(sys.argv[1])
-Backtrack(bags, i)
-
-output(bags)
+if Backtrack(bags, i):
+	output(bags)
+else:
+	print("no solution found")

@@ -36,4 +36,4 @@ class Bag:
 	def removeItem(self, type, number):
 		if type in self.contains:
 			self.contains.remove(type)
-		self.weight -= number
+		self._weight -= number

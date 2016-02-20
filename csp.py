@@ -1,6 +1,7 @@
 # csp.py
 
 from enum import Enum
+from constraint import Constraint
 import sys
 from bag import *
 
@@ -16,14 +17,15 @@ class InputType(Enum):
 
 # constraints
 items = {}
-bag_min = 0
-bag_max = 0
-binaryequals = []
-binarynotequals = []
-un_incl = {}
-un_excl = {}
-bin_sim = {}
+# bag_min = 0
+# bag_max = 0
+# binaryequals = []
+# binarynotequals = []
+# un_incl = {}
+# un_excl = {}
+# bin_sim = {}
 
+constraints = Constraint()
 bags = []
 
 def parseInput(file):
@@ -33,7 +35,7 @@ def parseInput(file):
 
 	while line:
 		if line[0] is '#':
-			type+=1
+			type += 1
 			line = f.readline()
 		else:
 			line = line.rstrip().split(" ")
@@ -42,77 +44,108 @@ def parseInput(file):
 			elif type is 2:
 				bags.append(Bag(line[0], int(line[1])))
 			elif type is 3:
-				print("type=3, line: ",line[1])
-				bag_min = int(line[0])
-				bag_max = int(line[1])
+				constraints.bag_min = int(line[0])
+				constraints.bag_max = int(line[1])
 			elif type is 4:
-				un_incl[line[0]]=line[1:]
+				constraints.un_incl[line[0]]=line[1:]
 			elif type is 5:
-				un_excl[line[0]]=line[1:]
+				constraints.un_excl[line[0]]=line[1:]
 			elif type is 6:
-				binaryequals.append(line[0]+line[1])
+				constraints.binaryequals.append(line[0]+line[1])
 			elif type is 7:
-				binarynotequals.append(line[0]+line[1])
+				constraints.binarynotequals.append(line[0]+line[1])
 			elif type is 8:
-				bin_sim[line[0]+line[1]]=line[2]+line[3]
+				constraints.bin_sim[line[0]+line[1]]=line[2]+line[3]
 			line = f.readline()
 
-	print("un_excl: ",un_excl)
 	f.close()
 
 def within_limits(bag, n):
-	print("bag ",bag.name," currently contains ",len(bag.contains)," and we're trying to add ",n," to it")
-	return len(bag.contains) + n <= bag_max and len(bag.contains) + n >= bag_min
+
+	return len(bag.contains) + n <= constraints.bag_max and len(bag.contains) + n >= constraints.bag_min
+
+def isInAnyBag(item):
+	for bag in bags:
+		if items in bag.contains:
+			return True
+
+	return False
 
 def canAddToBag(item, bag):
+
+	#print("canAddToBag: 1");
+
 	# unary exclusive
-	if item in list(un_excl.keys()):
-		if bag.name in un_excl[item]:
+	if item in list(constraints.un_excl.keys()):
+		if bag.name in constraints.un_excl[item]:
 			return False
+
+	#print("canAddToBag: 2");
 
 	# unary inclusive
-	if item in list(un_incl.keys()):
-		if bag.name not in un_incl[item]:
+	if item in list(constraints.un_incl.keys()):
+		if bag.name not in constraints.un_incl[item]:
 			return False
 
+	#print("canAddToBag: 3");
+
 	# mutually exclusive
-	for key in list(bin_sim.keys()):
-		if key[0] is item and  bag.name in bin_sim[key]:
+	for key in list(constraints.bin_sim.keys()):
+		if key[0] is item and bag.name in constraints.bin_sim[key]:
 			if key[1] in bag.contains:
 				return False
-		elif key[1] is item and bag.name in bin_sim[key]:
+		elif key[1] is item and bag.name in constraints.bin_sim[key]:
 			if key[0] in bag.contains:
 				return False
 
+	#print("canAddToBag: 4");
+
 	# binary not equals
-	for pair in binarynotequals:
+	for pair in constraints.binarynotequals:
 		if pair[0] is item and pair[1] in bag.contains:
 			return False
 		elif pair[1] is item and pair[0] in bag.contains:
 			return False
 
+	#print("canAddToBag: 5");
+
+	# binary equals
+	for pair in constraints.binaryequals:
+		if pair[0] is item:
+			if pair[1] not in bag.contains and isInAnyBag(pair[1]):
+				return False
+		elif pair[1] is item:
+			if pair[0] not in bag.contains and isInAnyBag(pair[1]):
+				return False
+
+	#print("canAddToBag: 6");
+
 	# fitting limits
-	print("canAddToBag: bag_max is ", bag_max)
-	global bag_max
-	if bag_max is 0:
-		return bag.capacity - bag.weight >= items[item]
-	else:
-		return within_limits(bag, 1)
+	#print("canAddToBag: bag_max is ", constraints.bag_max)
+	if constraints.bag_max is not 0:
+		if len(bag.contains) + 1 > constraints.bag_max:
+			return False
+
+	#print("canAddToBag: 7");
+
+	return (bag.capacity - bag.weight) >= items[item]
 
 def isCSPcomplete(assignment):
 
-	print("isCSPcomplete: fit limits")
+	for item in items:
+		if not isInAnyBag(item):
+			return False
 
 	# Fit limits
 	for bag in assignment:
-		if bag.weight >= (bag.capacity * 0.9):
+		if bag.weight < (bag.capacity * 0.9):
 			return False
-		if within_limits(bag, 0) is False:
+		
+		if constraints.bag_max != 0 and within_limits(bag, 0) is False:
 			return False
 
-	print("isCSPcomplete: before unary inclusive")
 	# Unary inclusive
-	for constraint in un_incl.items():
+	for constraint in constraints.un_incl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
 		target_bag = None
@@ -121,8 +154,6 @@ def isCSPcomplete(assignment):
 				target_bag = bag
 				break
 
-		print("isCSPcomplete: inside un_incl")
-
 		if target_bag not in constraint[1]:
 			return False
 		#else:
@@ -130,9 +161,7 @@ def isCSPcomplete(assignment):
 
 	#Unary exclusive
 
-	print("len(un_excl) is ",len(un_excl))
-	for constraint in un_excl.items():
-		print("HELLO PRESTON",constraint)
+	for constraint in constraints.un_excl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
 		target_bag = None
@@ -149,10 +178,12 @@ def isCSPcomplete(assignment):
 
 	#Binary constraints
 
-		#Equal
-	for constraint in binaryequals.items():
-		variableOne = constraint[0][1]
-		variableTwo = constraint[0][1]
+	#Equal
+	print("bin eqs", len(constraints.binaryequals))
+	for constraint in constraints.binaryequals:
+		print("constraint", constraint)
+		variableOne = constraint[0][0]
+		variableTwo = constraint[1][0]
 
 
 		for bag in assignment:
@@ -162,8 +193,8 @@ def isCSPcomplete(assignment):
 
 
 	#Not equal
-	for constraint in binarynotequals.items():
-		variableOne = constraint[0][1]
+	for constraint in constraints.binarynotequals:
+		variableOne = constraint[0][0]
 		variableTwo = constraint[0][1]
 
 		for bag in assignment:
@@ -173,7 +204,7 @@ def isCSPcomplete(assignment):
 
 
 	#Binary simultaneous
-	for constraint in bin_sim.items():
+	for constraint in constraints.bin_sim.items():
 		variableOne = constraint[0][0]
 		variableTwo = constraint[0][1]
 
@@ -219,11 +250,11 @@ def nextUnassignedVariables(assignment):
 
 def Backtrack(assignment, i):
 	i -= 1
-	if isCSPcomplete(assignment) is True or i is 0:
+	if isCSPcomplete(assignment) is True:
 		return
 
-	if len(nextUnassignedVariables(assignment)) is 0:
-		return
+	#if len(nextUnassignedVariables(assignment)) is 0:
+	#	return
 
 	var = nextUnassignedVariables(assignment)
 
@@ -232,7 +263,7 @@ def Backtrack(assignment, i):
 			val.addItem(var, items[var])
 			break;
 
-	if nextUnassignedVariables(assignment) is not []:
+	if len(nextUnassignedVariables(assignment)) != 0:
 		Backtrack(assignment, i)
 
 
@@ -283,8 +314,10 @@ if len(sys.argv) != 2:
 	print("Proper usage is python csp.py inputfile")
 	exit()
 
+sys.setrecursionlimit(50000)
 
-i = 200
+i = 19999
+
 parseInput(sys.argv[1])
 Backtrack(bags, i)
 

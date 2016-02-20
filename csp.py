@@ -254,8 +254,19 @@ def Backtrack(assignment, i):
 	
 	#if len(nextUnassignedVariables(assignment)) is 0:
 	#	return
+	for u in constraints.un_incl.keys():
+		if len(constraints.un_incl[u]) is 1:
+			bag = None
+			for b in assignment:
+				if b.name is constraints.un_incl[u][0]:
+					bag = b
+			for it in items.keys():
+				if it is u:
+					print("adding", it, "to bag", bag.name)
+					bag.addItem(it, items[it])
 
 	var = nextUnassignedVariables(assignment)
+	print(var)
 
 	for val in least_constraining_vals(var, assignment):
 		if canAddToBag(var, val) == True:
@@ -279,9 +290,20 @@ def min_remaining_var(items, bags):
 		for b in bags:
 			if canAddToBag(i, b):
 				bags_per_item[i] += 1
+	
+	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryInc(x)))
+	
+	return sortedDict[0]
+	
+def checkUnaryInc(var):
+	for c in constraints.un_incl.keys():
+		if str(var) is str(c):
+			return -1
+	
+	return 0
 		
-	return min(bags_per_item, key=bags_per_item.get)
-
+	
+	
 def least_constraining_vals(items, bags):
 	items_per_bag = {}
 
@@ -293,7 +315,7 @@ def least_constraining_vals(items, bags):
 	
 	#Flip dictionary
 	sortedDict = sorted(items_per_bag, key = lambda x: (items_per_bag.get, fitCapacityHeuristic(x)))
-	#sortedDict = sorted(items_per_bag, key=items_per_bag.get)
+
 	return reversed(sortedDict)
 	
 def fitCapacityHeuristic(bag1):

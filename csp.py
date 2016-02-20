@@ -238,7 +238,7 @@ def nextUnassignedVariables(assignment):
 	variables = list(items.keys())
 
 	for b in range(len(assignment)):
-		for i in len(assignment[b].contains):
+		for i in range(len(assignment[b].contains)):
 			if assignment[b].contains[i] in variables:
 				variables.remove(assignment[b].contains[i])
 				if len(variables) == 0:

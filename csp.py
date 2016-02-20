@@ -66,7 +66,7 @@ def within_limits(bag, n):
 
 def isInAnyBag(item):
 	for bag in bags:
-		if items in bag.contains:
+		if item in bag.contains:
 			return True
 
 	return False
@@ -132,7 +132,9 @@ def canAddToBag(item, bag):
 
 def isCSPcomplete(assignment):
 
+	print(items)
 	for item in items:
+		print(item)
 		if not isInAnyBag(item):
 			return False
 
@@ -156,11 +158,8 @@ def isCSPcomplete(assignment):
 
 		if target_bag not in constraint[1]:
 			return False
-		#else:
-		#	return True
-
+	
 	#Unary exclusive
-
 	for constraint in constraints.un_excl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
@@ -172,16 +171,12 @@ def isCSPcomplete(assignment):
 
 		if target_bag in constraint[1]:
 			return False
-		#else:
-		#	return True
 
 
 	#Binary constraints
 
 	#Equal
-	print("bin eqs", len(constraints.binaryequals))
 	for constraint in constraints.binaryequals:
-		print("constraint", constraint)
 		variableOne = constraint[0][0]
 		variableTwo = constraint[1][0]
 

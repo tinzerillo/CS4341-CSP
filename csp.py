@@ -186,12 +186,10 @@ def isCSPcomplete(assignment):
 		variableOne = constraint[0]
 		variableTwo = constraint[1]
 
-
 		for bag in assignment:
 			if variableOne in bag.contains:
 				if variableTwo not in bag.contains:
 					return False
-
 
 	#Not equal
 	for constraint in constraints.binarynotequals:
@@ -239,10 +237,10 @@ def nextUnassignedVariables(assignment):
 	#assignment: [] of bags
 	variables = list(items.keys())
 
-	for b in assignment:
-		for variable in b.contains:
-			if variable in variables:
-				variables.remove(variable)
+	for b in range(len(assignment)):
+		for i in len(assignment[b].contains):
+			if assignment[b].contains[i] in variables:
+				variables.remove(assignment[b].contains[i])
 				if len(variables) == 0:
 					return []
 

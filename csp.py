@@ -16,8 +16,8 @@ class InputType(Enum):
 
 # constraints
 items = {}
-bag_min=0
-bag_max=0
+bag_min = 0
+bag_max = 0
 binaryequals = []
 binarynotequals = []
 un_incl = {}
@@ -42,12 +42,13 @@ def parseInput(file):
 			elif type is 2:
 				bags.append(Bag(line[0], int(line[1])))
 			elif type is 3:
-				bag_min = line[0]
-				bag_max = line[1]
+				print("type=3, line: ",line[1])
+				bag_min = int(line[0])
+				bag_max = int(line[1])
 			elif type is 4:
-				un_incl[line[0]]=line[:1]
+				un_incl[line[0]]=line[1:]
 			elif type is 5:
-				un_excl[line[0]]=line[:1]
+				un_excl[line[0]]=line[1:]
 			elif type is 6:
 				binaryequals.append(line[0]+line[1])
 			elif type is 7:
@@ -56,10 +57,12 @@ def parseInput(file):
 				bin_sim[line[0]+line[1]]=line[2]+line[3]
 			line = f.readline()
 
+	print("un_excl: ",un_excl)
 	f.close()
 
 def within_limits(bag, n):
-	return bag.weight + n <= bag_max and bag.weight + n >= bag_min
+	print("bag ",bag.name," currently contains ",len(bag.contains)," and we're trying to add ",n," to it")
+	return len(bag.contains) + n <= bag_max and len(bag.contains) + n >= bag_min
 
 def canAddToBag(item, bag):
 	# unary exclusive
@@ -89,20 +92,25 @@ def canAddToBag(item, bag):
 			return False
 
 	# fitting limits
+	print("canAddToBag: bag_max is ", bag_max)
+	global bag_max
 	if bag_max is 0:
 		return bag.capacity - bag.weight >= items[item]
 	else:
-		return within_limits(bag, items[item])
+		return within_limits(bag, 1)
 
 def isCSPcomplete(assignment):
 
+	print("isCSPcomplete: fit limits")
+
 	# Fit limits
 	for bag in assignment:
-		if bag.weight < (bag.capacity * 0.9):
+		if bag.weight >= (bag.capacity * 0.9):
 			return False
-		if within_limits(bag, bag.weight) is False:
+		if within_limits(bag, 0) is False:
 			return False
 
+	print("isCSPcomplete: before unary inclusive")
 	# Unary inclusive
 	for constraint in un_incl.items():
 		variable = constraint[0]
@@ -113,14 +121,18 @@ def isCSPcomplete(assignment):
 				target_bag = bag
 				break
 
+		print("isCSPcomplete: inside un_incl")
+
 		if target_bag not in constraint[1]:
 			return False
-		else:
-			return True
+		#else:
+		#	return True
 
 	#Unary exclusive
 
+	print("len(un_excl) is ",len(un_excl))
 	for constraint in un_excl.items():
+		print("HELLO PRESTON",constraint)
 		variable = constraint[0]
 		# find what bag that variable is in...
 		target_bag = None
@@ -131,8 +143,8 @@ def isCSPcomplete(assignment):
 
 		if target_bag in constraint[1]:
 			return False
-		else:
-			return True
+		#else:
+		#	return True
 
 
 	#Binary constraints
@@ -272,8 +284,8 @@ if len(sys.argv) != 2:
 	exit()
 
 
-i = 20
+i = 200
 parseInput(sys.argv[1])
-Backtrack(bags, 20)
+Backtrack(bags, i)
 
 output(bags)

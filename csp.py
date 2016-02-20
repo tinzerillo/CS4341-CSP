@@ -74,6 +74,9 @@ def isInAnyBag(item):
 
 def canAddToBag(item, bag):
 
+	if isInAnyBag(item):
+		return False
+
 	#print("canAddToBag: 1");
 
 	# unary exclusive
@@ -260,7 +263,7 @@ def Backtrack(assignment, i):
 			break;
 
 	if len(nextUnassignedVariables(assignment)) > 0:
-		Backtrack(assignment, i)
+		return Backtrack(list(assignment), i)
 
 	if isCSPcomplete(assignment) == True:
 		return True

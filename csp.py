@@ -325,5 +325,7 @@ i = 600
 parseInput(sys.argv[1])
 if Backtrack(bags, i):
 	output(bags)
+	sys.exit(0)
 else:
 	print("no solution found")
+	sys.exit(1)

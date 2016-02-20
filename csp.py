@@ -205,8 +205,9 @@ def nextUnassignedVariables(assignment):
 	return min_remaining_var(variables, assignment)
 
 
-def Backtrack(assignment):
-	if isCSPcomplete(assignment) is True:
+def Backtrack(assignment, i):
+	i -= 1
+	if isCSPcomplete(assignment) is True or i is 0:
 		return
 
 	if len(nextUnassignedVariables(assignment)) is 0:
@@ -220,7 +221,7 @@ def Backtrack(assignment):
 			break;
 
 	if nextUnassignedVariables(assignment) is not []:
-		Backtrack(assignment)
+		Backtrack(assignment, i)
 
 
 def min_remaining_var(items, bags):
@@ -271,8 +272,8 @@ if len(sys.argv) != 2:
 	exit()
 
 
-
+i = 20
 parseInput(sys.argv[1])
-Backtrack(bags)
+Backtrack(bags, 20)
 
 output(bags)

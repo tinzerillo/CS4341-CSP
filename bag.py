@@ -1,6 +1,8 @@
 # Project 5 - CSP
 # Theresa Inzerillo & Preston Mueller
 # CS4341 Introduction to Artificial Intelligence
+#
+# Bag object class
 
 class Bag:
 	def __init__(self, name, capacity):

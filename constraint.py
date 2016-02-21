@@ -1,3 +1,9 @@
+# Project 5 - CSP
+# Theresa Inzerillo & Preston Mueller
+# CS4341 Introduction to Artificial Intelligence
+#
+# Constraint object class
+
 class Constraint():
 
 	def __init__(self):

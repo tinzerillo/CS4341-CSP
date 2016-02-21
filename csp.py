@@ -1,4 +1,11 @@
-# csp.py
+# Project 5 - CSP
+# Theresa Inzerillo & Preston Mueller
+# CS4341 Introduction to Artificial Intelligence
+#
+# This class implements a backtrack algorithm on
+# constraints, items and bags given in an input file.
+#
+# To run: python csp.py [inputfile]
 
 from enum import Enum
 from constraint import Constraint
@@ -16,21 +23,17 @@ class InputType(Enum):
 	binarynoteq=7
 	binarysimult=8
 
-# constraints
-items = {}
-# bag_min = 0
-# bag_max = 0
-# binaryequals = []
-# binarynotequals = []
-# un_incl = {}
-# un_excl = {}
-# bin_sim = {}
 
-constraints = Constraint()
-bags = []
-
+# Parses a file into a constraint object
+#
+# @param file - filename to open
 def parseInput(file):
-	f = open(file, "r")
+	try:
+		f = open(file, "r")
+	except FileNotFoundError as e:
+		print("Error: could not find", file)
+		sys.exit(1)
+	
 	type=0
 	line = f.readline()
 
@@ -61,38 +64,46 @@ def parseInput(file):
 
 	f.close()
 
+	
+# N=0: checks if bag satisfies fitting limites
+# N=1: checks if adding an item will satisfy fitting limits
+#
+# @param bag - the bag to check
+# @param n - the number of items to be passed in (see above)
 def within_limits(bag, n):
-	print("len(bag.contains) is ",len(bag.contains)," and min is ",constraints.bag_min)
 	return len(bag.contains) + n <= constraints.bag_max and len(bag.contains) + n >= constraints.bag_min
 
-def isInAnyBag(item):
-	for bag in bags:
-		if item in bag.contains:
+# checks if the given item is in any of the bags
+#
+# @param item - the item to check
+# @param assignment - the current list of bags
+# @return true if the item is in a bag, false otherwise
+def isInAnyBag(item, assignment):
+	for bag in assignment:
+		if str(item) in str(bag.contains):
 			return True
 
 	return False
 
-def canAddToBag(item, bag):
-
-	if isInAnyBag(item):
-		return False
-
-	#print("canAddToBag: 1");
-
+	
+# Prunes cases in which adding the item to the specified bag
+# will result in constraints not being satisfied
+#
+# @param item - item to add
+# @param bag - bag to put item into
+# @param assignment - current list of bags
+# @return whether or not to prune this combination of bag and item
+def arc_consistency(item, bag, assignment):
 	# unary exclusive
 	if item in list(constraints.un_excl.keys()):
 		if bag.name in constraints.un_excl[item]:
 			return False
 
-	#print("canAddToBag: 2");
-
 	# unary inclusive
 	if item in list(constraints.un_incl.keys()):
 		if bag.name not in constraints.un_incl[item]:
 			return False
-
-	#print("canAddToBag: 3");
-
+			
 	# mutually exclusive
 	for key in list(constraints.bin_sim.keys()):
 		if key[0] is item and bag.name in constraints.bin_sim[key]:
@@ -102,8 +113,6 @@ def canAddToBag(item, bag):
 			if key[0] in bag.contains:
 				return False
 
-	#print("canAddToBag: 4");
-
 	# binary not equals
 	for pair in constraints.binarynotequals:
 		if pair[0] is item and pair[1] in bag.contains:
@@ -111,49 +120,43 @@ def canAddToBag(item, bag):
 		elif pair[1] is item and pair[0] in bag.contains:
 			return False
 
-	#print("canAddToBag: 5");
-
 	# binary equals
 	for pair in constraints.binaryequals:
 		if pair[0] is item:
-			if pair[1] not in bag.contains and isInAnyBag(pair[1]):
+			if pair[1] not in bag.contains and isInAnyBag(pair[1], assignment):
 				return False
 		elif pair[1] is item:
-			if pair[0] not in bag.contains and isInAnyBag(pair[1]):
+			if pair[0] not in bag.contains and isInAnyBag(pair[0], assignment):
 				return False
 
-	#print("canAddToBag: 6");
-
 	# fitting limits
-	#print("canAddToBag: bag_max is ", constraints.bag_max)
 	if constraints.bag_max is not 0:
 		if len(bag.contains) + 1 > constraints.bag_max:
 			return False
 
-	#print("canAddToBag: 7");
+	return bag.wastedCapacity() >= items[item]
 
-	return (bag.capacity - bag.weight) >= items[item]
 
+# Checks whether the constraint satisfaction problem is complete
+#
+# @param assignment - the current list of bags
+# @return true if all constraints are satisfied, false otherwise
 def isCSPcomplete(assignment):
-	#print("isCSPcomplete starter")
 
+	# check that all items are in a bag
 	for item in items:
-		if not isInAnyBag(item):
+		if not isInAnyBag(item, assignment):
 			return False
 
-	# Fit limits
-	#print("isCSPcomplete: fit limits")
+	# Fit limits and bag capacity check
 	for bag in assignment:
 		if bag.weight < math.floor(bag.capacity * 0.9) or bag.weight > bag.capacity:
-			#print("returning false due to fit limits case 1: weight", bag.weight, "capacity", bag.capacity)
 			return False
 		
 		if constraints.bag_max != 0 and within_limits(bag, 0) == False:
-			#print("returning false due to fit limits case 2")
 			return False
 
-	# Unary inclusive
-	#print("isCSPcomplete: unary inclusive")
+	# Unary inclusive check
 	for constraint in constraints.un_incl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
@@ -165,8 +168,7 @@ def isCSPcomplete(assignment):
 		if target_bag.name not in constraint[1]:
 			return False
 	
-	#Unary exclusive
-	#print("isCSPcomplete: unary exclusive")
+	#Unary exclusive check
 	for constraint in constraints.un_excl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
@@ -183,10 +185,7 @@ def isCSPcomplete(assignment):
 	#Binary constraints
 
 	#Equal
-	#print 
-	#print("isCSPcomplete: binary equals")
 	for constraint in constraints.binaryequals:
-		print("182 ", constraint)
 		variableOne = constraint[0]
 		variableTwo = constraint[1]
 
@@ -196,7 +195,6 @@ def isCSPcomplete(assignment):
 					return False
 
 	#Not equal
-	#print("isCSPcomplete: binary not equals")
 	for constraint in constraints.binarynotequals:
 		variableOne = constraint[0]
 		variableTwo = constraint[1]
@@ -208,7 +206,6 @@ def isCSPcomplete(assignment):
 
 
 	#Binary simultaneous
-	#print("isCSPcomplete: binary simultaneous")
 	for constraint in constraints.bin_sim.items():
 		variableOne = constraint[0][0]
 		variableTwo = constraint[0][1]
@@ -237,34 +234,39 @@ def isCSPcomplete(assignment):
 		if variableTwo in bagTwoClass.contains and variableOne not in bagOneClass.contains:
 			return False
 
+	# everything is satisfied...CSP is complete
 	return True
 
+
+# Gets the next, most constrained, variable (item)
+# Feeds a list of current unassigned variables to 
+# min_remaining_var. 
+# 
+# @param assignment - list of bags
+# @return most constrained value according to our heuristic
 def nextUnassignedVariables(assignment):
 	#assignment: [] of bags
 	variables = list(items.keys())
 
-	for b in range(len(assignment)):
-		for i in range(len(assignment[b].contains)):
-			if assignment[b].contains[i] in variables:
-				variables.remove(assignment[b].contains[i])
-				if len(variables) == 0:
-					return []
+	for i in list(items.keys()):
+		if isInAnyBag(i, assignment):
+			variables.remove(i)
+			if len(variables) == 0:
+				return []
 
 	return min_remaining_var(variables, assignment)
 
 
-def Backtrack(assignment, i):
-	i -= 1
-
-	if i == 0:
-		return False
-
-	#if isCSPcomplete(assignment) == True:
-	#	return True
-	
+# Implementation of the backtrack algorithm to sort items into bags
+# based on constraints
+#
+# @param assignment - current list of bags
+# @return the list of bags with all the items sorted in, or None if no solution
+def Backtrack(assignment):
 	if len(nextUnassignedVariables(assignment)) == 0:
-		return False
+		return None
 
+	# complete unary inclusive additions first if an item only has one possible bag (most constrained)
 	uninc1 = []
 	for u in constraints.un_incl.keys():
 		if len(constraints.un_incl[u]) == 1:
@@ -275,53 +277,52 @@ def Backtrack(assignment, i):
 		for b in assignment:
 			if b.name is itembag[1]:
 				bag = b
-				print("adding", itembag[0], "to bag", bag.name)
 				bag.addItem(itembag[0], items[itembag[0]])
 				break
 
+	# try most constrained item first
 	var = nextUnassignedVariables(assignment)
 
-	#mostRecentlyAdded = ()
-
+	# try most constrained item in least constrained bag first, 
+	#then if it doesn't work, try second least constrained bag, etc
 	for val in least_constraining_vals(var, assignment):
-			print("trying", var, "into",val.name)
-			val.addItem(var, items[var])
-			Backtrack(list(assignment), i)
+			if arc_consistency(var, val, assignment):
+				val.addItem(var, items[var])
+				Backtrack(list(assignment))
 
-			if isCSPcomplete(assignment) == True:
-				return True
-			else:
-				val.removeItem(var, items[var])
+				if isCSPcomplete(assignment) == True:
+					return assignment
+				else:
+					val.removeItem(var, items[var])
+					
 
-
-		#if canAddToBag(var, val) == True:
-		
-			#mostRecentlyAdded = (val, var)
-			#break;
-
-	#if len(nextUnassignedVariables(assignment)) > 0:
-		#mostRecentlyAdded[0].removeItem(mostRecentlyAdded[1], items[mostRecentlyAdded[1]])
-		#return Backtrack(list(assignment), i)
-
-	if isCSPcomplete(assignment) == True:
-		return True
-	else:
-		return False
-
-
-def min_remaining_var(items, bags):
+# Gets the next, most constrained, variable (item)
+# using three heuristics, 1. # of bags an item can fit into,
+# 2. # of unary constraints, 3. weight of item
+# 
+# @param items - list of items
+# @param assignment - list of bags
+# @return most constrained value according to our heuristic
+def min_remaining_var(items, assignment):
 	bags_per_item = {}
 
 	for i in items:
 		bags_per_item[i] = 0
-		for b in bags:
-			if canAddToBag(i, b):
+		for b in assignment:
+			if arc_consistency(i, b, assignment):
 				bags_per_item[i] += 1
 	
-	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryConstraints(x), checkSize(x)))
+	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryConstraints(x), checkWeight(x)))
 	
 	return sortedDict[0]
 	
+	
+# Secondary heuristic for finding the most constrained item
+# The more negative a value, the more constraints it has. 
+# If 0, no unary constraints.
+#
+# @param item - the item to assign a heuristic val to
+# @return heuristic value for this item
 def checkUnaryConstraints(var):
 	ret = 0
 
@@ -335,16 +336,31 @@ def checkUnaryConstraints(var):
 	
 	return ret
 
-def checkSize(item):
+
+# Tertiary heuristic for finding the most constrained item
+# The more negative a value, the more constraints it has using
+# its size as a constraint so more favor given to larger items.
+#
+# @param item - the item to assign a heuristic val to
+# @return heuristic value for this item
+def checkWeight(item):
 	return items[item]*-1
+
 	
-def least_constraining_vals(items, bags):
+# Finds the least constraining bag for items to fit into by sorting on
+# 1. the number of different items that can fit into the bag and 2. the
+# amount of space needed to be filled in a bag
+#
+# @param items - the list of items
+# @param assignment - the list of bags
+# @return the most constrained bag based on the heuristic 
+def least_constraining_vals(items, assignment):
 	items_per_bag = {}
 
-	for b in bags:
+	for b in assignment:
 		items_per_bag[b] = 0
 		for i in items:
-			if canAddToBag(i, b):
+			if arc_consistency(i, b, assignment):
 				items_per_bag[b] += 1
 	
 	#Flip dictionary
@@ -352,24 +368,29 @@ def least_constraining_vals(items, bags):
 
 	return reversed(sortedDict)
 	
-def fitCapacityHeuristic(bag1):
+	
+# Heuristic used in least_constraining_vals to rank bags
+# based on space they need to fill.
+#
+# @param bag - the bag to check for space needed to fill
+# @return - the heuristic value of the bag based on capacity and fit limits
+def fitCapacityHeuristic(bag):
 	ret = 0
 	
-	cap1 = math.floor(bag1.capacity * 0.9)
-	if bag1.weight < cap1:
-			ret += cap1-bag1.weight
+	cap = math.floor(bag.capacity * 0.9)
+	if bag.weight < cap:
+			ret += cap-bag.weight
 		
 	if constraints.bag_max != 0:
-		if len(bag1.contains) < constraints.bag_min:
-			ret += constraints.bag_min - len(bag1.contains)
+		if len(bag.contains) < constraints.bag_min:
+			ret += constraints.bag_min - len(bag.contains)
 
 	return ret
-		
-	
-def arc_consistency():
-	pass
 
 
+# Prints the output of backtrack in the specified format
+#
+# @param assignment - final state of the bags
 def output(assignment):
 	for bag in assignment:
 		print(bag.name, " ", end="")
@@ -382,20 +403,25 @@ def output(assignment):
 		print("wasted capacity: " + str(bag.wastedCapacity()))
 		print("")
 
-
+		
+# check proper commandline usage
 if len(sys.argv) != 2:
 	print("Proper usage is python csp.py inputfile")
 	exit()
 
-sys.setrecursionlimit(99000)
+	
+items = {}
+bags = []
 
-i = 100
+constraints = Constraint()
 
 parseInput(sys.argv[1])
-if Backtrack(bags, i):
-	output(bags)
+
+final = Backtrack(bags)
+
+if final is not None:
+	output(final)
 	sys.exit(0)
 else:
 	print("no solution found")
-	output(bags)
 	sys.exit(1)

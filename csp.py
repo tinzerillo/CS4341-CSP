@@ -135,24 +135,25 @@ def canAddToBag(item, bag):
 	return (bag.capacity - bag.weight) >= items[item]
 
 def isCSPcomplete(assignment):
-	print("isCSPcomplete starter")
+	#print("isCSPcomplete starter")
 
 	for item in items:
 		if not isInAnyBag(item):
 			return False
 
 	# Fit limits
-	print("isCSPcomplete: fit limits")
+	#print("isCSPcomplete: fit limits")
 	for bag in assignment:
-		if bag.weight < math.floor(bag.capacity * 0.9) :
-			print("returning false due to fit limits case 1: weight", bag.weight, "capacity", bag.capacity)
+		if bag.weight < math.floor(bag.capacity * 0.9) or bag.weight > bag.capacity:
+			#print("returning false due to fit limits case 1: weight", bag.weight, "capacity", bag.capacity)
 			return False
 		
 		if constraints.bag_max != 0 and within_limits(bag, 0) == False:
-			print("returning false due to fit limits case 2")
+			#print("returning false due to fit limits case 2")
 			return False
 
 	# Unary inclusive
+	#print("isCSPcomplete: unary inclusive")
 	for constraint in constraints.un_incl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
@@ -161,11 +162,11 @@ def isCSPcomplete(assignment):
 			if variable in bag.contains:
 				target_bag = bag
 				break
-
-		if target_bag not in constraint[1]:
+		if target_bag.name not in constraint[1]:
 			return False
 	
 	#Unary exclusive
+	#print("isCSPcomplete: unary exclusive")
 	for constraint in constraints.un_excl.items():
 		variable = constraint[0]
 		# find what bag that variable is in...
@@ -183,6 +184,7 @@ def isCSPcomplete(assignment):
 
 	#Equal
 	#print 
+	#print("isCSPcomplete: binary equals")
 	for constraint in constraints.binaryequals:
 		print("182 ", constraint)
 		variableOne = constraint[0]
@@ -194,6 +196,7 @@ def isCSPcomplete(assignment):
 					return False
 
 	#Not equal
+	#print("isCSPcomplete: binary not equals")
 	for constraint in constraints.binarynotequals:
 		variableOne = constraint[0]
 		variableTwo = constraint[1]
@@ -205,6 +208,7 @@ def isCSPcomplete(assignment):
 
 
 	#Binary simultaneous
+	#print("isCSPcomplete: binary simultaneous")
 	for constraint in constraints.bin_sim.items():
 		variableOne = constraint[0][0]
 		variableTwo = constraint[0][1]
@@ -251,30 +255,53 @@ def nextUnassignedVariables(assignment):
 
 def Backtrack(assignment, i):
 	i -= 1
+
+	if i == 0:
+		return False
+
+	#if isCSPcomplete(assignment) == True:
+	#	return True
 	
-	#if len(nextUnassignedVariables(assignment)) is 0:
-	#	return
+	if len(nextUnassignedVariables(assignment)) == 0:
+		return False
+
+	uninc1 = []
 	for u in constraints.un_incl.keys():
-		if len(constraints.un_incl[u]) is 1:
-			bag = None
-			for b in assignment:
-				if b.name is constraints.un_incl[u][0]:
-					bag = b
-			for it in items.keys():
-				if it is u:
-					print("adding", it, "to bag", bag.name)
-					bag.addItem(it, items[it])
+		if len(constraints.un_incl[u]) == 1:
+			uninc1.append([u, constraints.un_incl[u]])
+
+	for itembag in uninc1:
+		bag = None
+		for b in assignment:
+			if b.name is itembag[1]:
+				bag = b
+				print("adding", itembag[0], "to bag", bag.name)
+				bag.addItem(itembag[0], items[itembag[0]])
+				break
 
 	var = nextUnassignedVariables(assignment)
-	print(var)
+
+	#mostRecentlyAdded = ()
 
 	for val in least_constraining_vals(var, assignment):
-		if canAddToBag(var, val) == True:
+			print("trying", var, "into",val.name)
 			val.addItem(var, items[var])
-			break;
+			Backtrack(list(assignment), i)
 
-	if len(nextUnassignedVariables(assignment)) > 0:
-		return Backtrack(list(assignment), i)
+			if isCSPcomplete(assignment) == True:
+				return True
+			else:
+				val.removeItem(var, items[var])
+
+
+		#if canAddToBag(var, val) == True:
+		
+			#mostRecentlyAdded = (val, var)
+			#break;
+
+	#if len(nextUnassignedVariables(assignment)) > 0:
+		#mostRecentlyAdded[0].removeItem(mostRecentlyAdded[1], items[mostRecentlyAdded[1]])
+		#return Backtrack(list(assignment), i)
 
 	if isCSPcomplete(assignment) == True:
 		return True
@@ -291,18 +318,25 @@ def min_remaining_var(items, bags):
 			if canAddToBag(i, b):
 				bags_per_item[i] += 1
 	
-	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryInc(x)))
+	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryConstraints(x), checkSize(x)))
 	
 	return sortedDict[0]
 	
-def checkUnaryInc(var):
+def checkUnaryConstraints(var):
+	ret = 0
+
 	for c in constraints.un_incl.keys():
 		if str(var) is str(c):
-			return -1
+			ret += -1
+
+	for c in constraints.un_excl.keys():
+		if str(var) is str(c):
+			ret += -1
 	
-	return 0
-		
-	
+	return ret
+
+def checkSize(item):
+	return items[item]*-1
 	
 def least_constraining_vals(items, bags):
 	items_per_bag = {}
@@ -355,7 +389,7 @@ if len(sys.argv) != 2:
 
 sys.setrecursionlimit(99000)
 
-i = 600
+i = 100
 
 parseInput(sys.argv[1])
 if Backtrack(bags, i):
@@ -363,4 +397,5 @@ if Backtrack(bags, i):
 	sys.exit(0)
 else:
 	print("no solution found")
+	output(bags)
 	sys.exit(1)

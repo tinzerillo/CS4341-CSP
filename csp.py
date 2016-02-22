@@ -93,7 +93,7 @@ def isInAnyBag(item, assignment):
 # @param bag - bag to put item into
 # @param assignment - current list of bags
 # @return whether or not to prune this combination of bag and item
-def arc_consistency(item, bag, assignment):
+def forward_check(item, bag, assignment):
 	# unary exclusive
 	if item in list(constraints.un_excl.keys()):
 		if bag.name in constraints.un_excl[item]:
@@ -286,7 +286,7 @@ def Backtrack(assignment):
 	# try most constrained item in least constrained bag first, 
 	#then if it doesn't work, try second least constrained bag, etc
 	for val in least_constraining_vals(var, assignment):
-			if arc_consistency(var, val, assignment):
+			if forward_check(var, val, assignment):
 				val.addItem(var, items[var])
 				Backtrack(list(assignment))
 
@@ -309,7 +309,7 @@ def min_remaining_var(items, assignment):
 	for i in items:
 		bags_per_item[i] = 0
 		for b in assignment:
-			if arc_consistency(i, b, assignment):
+			if forward_check(i, b, assignment):
 				bags_per_item[i] += 1
 	
 	sortedDict = sorted(bags_per_item, key = lambda x: (bags_per_item.get, checkUnaryConstraints(x), checkWeight(x)))
@@ -360,7 +360,7 @@ def least_constraining_vals(items, assignment):
 	for b in assignment:
 		items_per_bag[b] = 0
 		for i in items:
-			if arc_consistency(i, b, assignment):
+			if forward_check(i, b, assignment):
 				items_per_bag[b] += 1
 	
 	#Flip dictionary

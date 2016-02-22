@@ -392,10 +392,11 @@ def fitCapacityHeuristic(bag):
 #
 # @param assignment - final state of the bags
 def output(assignment):
-	for bag in assignment:
-		print(bag.name, " ", end="")
+	for x in range(0,len(assignment)):
+		bag = assignment[x]
+		print(bag.name, "", end="")
 		for variable in bag.contains:
-			print(variable, end=" ")
+			print(variable, "", end="")
 		print(" ")
 
 		print("number of items: " + str(len(bag.contains)))
